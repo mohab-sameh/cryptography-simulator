@@ -375,21 +375,22 @@ class RC4:
 
         return Y
 
-class AES():
+class SAES():
     def encrypt(ps,ks):
         input = ps.replace(" ", "")
         key = ks.replace(" ", "")
         ps= input
         ks = key
-        
+
         sBox  = [0x9, 0x4, 0xa, 0xb, 0xd, 0x1, 0x8, 0x5,
                  0x6, 0x2, 0x0, 0x3, 0xc, 0xe, 0xf, 0x7]
-
-        w = [None] * 6
-         
         
+        
+        w = [None] * 6
+        
+         
         def mult(p1, p2):
-            """Multiply two polynomials in GF(2^4)/x^4 + x + 1"""
+           
             p = 0
             while p2:
                 if p2 & 0b1:
@@ -401,72 +402,51 @@ class AES():
             return p & 0b1111
          
         def intToVec(n):
-        
+            
             return [n >> 12, (n >> 4) & 0xf, (n >> 8) & 0xf,  n & 0xf]            
          
         def vecToInt(m):
-            """Convert a 4-element vector into 2-byte integer"""
+            
             return (m[0] << 12) + (m[2] << 8) + (m[1] << 4) + m[3]
          
         def addKey(s1, s2):
-            """Add two keys in GF(2^4)"""  
+           
             return [i ^ j for i, j in zip(s1, s2)]
              
         def sub4NibList(s):
-            """Nibble substitution function"""
+            
             return [sBox[e] for e in s]
              
         def shiftRow(s):
-            """ShiftRow function"""
+            
             return [s[0], s[1], s[3], s[2]]
          
         def keyExp(key):
-            """Generate the three round keys"""
+            
             def sub2Nib(b):
-                """Swap each nibble and substitute it using sBox"""
+                
                 return sBox[b >> 4] + (sBox[b & 0x0f] << 4)
          
             Rcon1, Rcon2 = 0b10000000, 0b00110000
-            st.text("Steps >>>>>>>>>>>>>>>>>>>>")
             w[0] = (key & 0xff00) >> 8
             w[1] = key & 0x00ff
             w[2] = w[0] ^ Rcon1 ^ sub2Nib(w[1])
             w[3] = w[2] ^ w[1]
             w[4] = w[2] ^ Rcon2 ^ sub2Nib(w[3])
             w[5] = w[4] ^ w[3]
-            st.text(f"w0= {decimalToBinary(w[0])}")
-            st.text(f"w1= {decimalToBinary(w[1])}")
-            st.text(f"w2= {decimalToBinary(w[2])}")
-            st.text(f"w3= {decimalToBinary(w[3])}")
-            st.text(f"w4= {decimalToBinary(w[4])}")
-            st.text(f"w5= {decimalToBinary(w[5])} >>>>>>>>>>>>>>>>>>>>")
-            st.text(f"key0= {decimalToBinary(key)}")
-            st.text(f"key1= {decimalToBinary((w[2] << 8) + w[3])}") 
-            st.text(f"key2= {decimalToBinary((w[4] << 8) + w[5])} >>>>>>>>>>>>>>>>>>>>")
-                  
+         
         def encrypt(ptext,key):
-            """Encrypt plaintext block"""
+            
             def mixCol(s):
                 return [s[0] ^ mult(4, s[2]), s[1] ^ mult(4,s[3]),
                         s[2] ^ mult(4, s[0]), s[3] ^ mult(4, s[1])]    
              
             state = intToVec(key ^ ptext)
-            st.text(f"Plaintext XOR Key0= {decimalToBinary(key ^ ptext)} ")
-            st.text(f"Nibble sub= {decimalToBinary(vecToInt(sub4NibList(state)))}")
-            st.text(f"shiftRow= {decimalToBinary(vecToInt(shiftRow(sub4NibList(state))))}")
             state = mixCol(shiftRow(sub4NibList(state)))
-            st.text(f"mix col= {decimalToBinary(vecToInt(state))} >>>>>>>>>>>>>>>>>>>>")
             state = addKey(intToVec((w[2] << 8) + w[3]), state)
-            st.text(f"Result of mix column XOR Key1 = {decimalToBinary(vecToInt(state))}")
-            st.text(f"Nibble sub = {decimalToBinary(vecToInt(sub4NibList(state)))}")
             state = shiftRow(sub4NibList(state))
-            st.text(f"shift row = {decimalToBinary(vecToInt(state))} >>>>>>>>>>>>>>>>>>>>")
-            st.text(f"Result of Shift rows XOR Key2 = {decimalToBinary(vecToInt(addKey(intToVec((w[4] << 8) + w[5]), state)))} >>>>>>>>>>>>>>>>>>>>")
-            st.text(vecToInt(addKey(intToVec((w[4] << 8) + w[5]), state)))
-            
+         
             return vecToInt(addKey(intToVec((w[4] << 8) + w[5]), state))
-
-     
              
         def decimalToBinary(n):
             return bin(n).replace("0b", "")
@@ -771,7 +751,6 @@ if algorithm == 'El-Gamal':
 input_submit = st.button('Apply Selected Options')
 
 
-
 if input_submit:
     st.write(input)
     st.write(algorithm)
@@ -781,7 +760,7 @@ if input_submit:
     if algorithm == 'RC4':
         RC4.encrypt_with_steps(input,key)
     if algorithm == 'S-AES':
-        AES.encrypt(input, key)
+        SAES.encrypt(input, key)
     if algorithm == 'Playfair':
         if operation == 'Encryption':
             PlayFair.encrypt(input,key)
